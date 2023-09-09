@@ -32,7 +32,7 @@ def segmentation(record, hz=250, segment_time=3.072):
     result = np.reshape(result, (12, result.shape[0], result.shape[-1])) # by default shape is 12,3,768
     return result
 
-def pipeline(record_name, prefix):
+def pipeline(record_name, prefix, ecg_lead, segment_num):
 
     record = load_record(record_name, prefix)
     record = downsample(record)
@@ -42,5 +42,6 @@ def pipeline(record_name, prefix):
     record = savgol_filter(record, window_length = 8, polyorder=3) 
 
     record = np.asarray(pywt.swt(record, wavelet='db5', level=6, axis=-1))
+    record = np.reshape(a=record, newshape=(12, 12, 3, 768))[:, ecg_lead, segment_num,:]
 
     return record
