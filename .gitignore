@@ -1,2 +1,7 @@
 /transformed_train/
 /transformed_test/
+./lightning_logs
+./test
+./train
+./train_annotations.csv
+./val_annotations.csv
