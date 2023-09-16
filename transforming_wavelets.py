@@ -80,7 +80,7 @@ class Pipeline_SWT(BasePreprocessingPipeline):
             data_sample.append(np.asarray(
                 pywt.swt(record_part, wavelet='db5', level=6, axis=-1)))
 
-        data_sample = np.asarray(data_sample) 
+        data_sample = np.asarray(data_sample)
         features = self._calculate_features(data_sample)
 
         return features
@@ -110,70 +110,41 @@ class Pipeline_SWT(BasePreprocessingPipeline):
 
 class Pipeline_CWT_CNN(BasePreprocessingPipeline):
 
-    def __init__(self, prefix):
+    def __init__(self, prefix, segment_num):
+        self.segment_num = segment_num
         super().__init__(prefix)
 
-    def run_pipeline(self, record_name, segment_num, test=False):
+    def run_pipeline(self, record_name, test=False):
         data_sample = []
         scales = range(1, 376)
-        
+
         record = self.run_preprocessing(record_name, segment_time=1.5)
+
         # в transforming.ipynb рекорды с миокардом дублируются дважды и к названиям добавляется _1, _2
         # делается чтобы оверсемплить сэмплы с миокардом, потому что имбаланс.
         if (record_name[-2] == "_"):
-            # код для получения cwt для каждого экг лида отдельно
-            # for ecg_lead in range(12):
-            #     seg_num2 = 0 if int(record_name[-1]) == 1 else 2
-            #     record_part = record[ecg_lead, seg_num2, :]
+            self.segment_num = 1 if int(record_name[-1]) == 1 else 2
 
-            #     coeffs, freq = pywt.cwt(record_part, scales,
-            #                             'morl', sampling_period=1, axis=-1)
-            #     data_sample.append(coeffs)
-
-            seg_num2 = 0 if int(record_name[-1]) == 1 else 2
-            record_part = record[:, seg_num2, :]
-            coeffs, freq = pywt.cwt(record_part, scales,
-                                    'morl', sampling_period=1, axis=-1)
-            data_sample = coeffs
-        else:
-            # for ecg_lead in range(12):
-            #     record_part = record[ecg_lead, segment_num, :]
-
-            #     coeffs, freq = pywt.cwt(record_part, scales,
-            #                             'morl', sampling_period=1, axis=-1)
-            #     data_sample.append(coeffs)
-            
-            record_part = record[:, segment_num, :]
+        # код для получения cwt для каждого экг лида отдельно
+        for ecg_lead in range(12):
+            record_part = record[ecg_lead, self.segment_num, :]
 
             coeffs, freq = pywt.cwt(record_part, scales,
                                     'morl', sampling_period=1, axis=-1)
             data_sample.append(coeffs)
 
-        data_sample = np.array(data_sample[0])       
-        if(test):
-            data_sample2 = []
-            data_sample2 = np.ndarray(shape=(12, 375, 375))
-            record_part = np.reshape(record, (12, 375*6)) 
-            for ecg_lead in range(12):
-                coeffs, freq = pywt.cwt(record_part[ecg_lead, :], scales,
-                                        'morl', sampling_period=1, axis=-1)
-                coeffs = np.reshape(coeffs, (-1, 6, 375))
-                data_sample2[ecg_lead, :, :] = coeffs[:,-375:]
+        data_sample = np.array(data_sample)
+        data_sample = np.reshape(data_sample, (12,  375, 375))
 
-            #data_sample2 = data_sample2[:, segment_num, :]
-
+        if (test):
             self.show_scaleogram(data_sample)
-            self.show_scaleogram(data_sample2)
 
         return data_sample
 
 
-
-
 if __name__ == "__main__":
-    pipeline = Pipeline_CWT_CNN(prefix="./train/")
-    pipeline.run_pipeline('00009_hr', segment_num=1, test=True)
-
+    pipeline = Pipeline_CWT_CNN(prefix="./train/", segment_num=1)
+    pipeline.run_pipeline('00009_hr', test=True)
 
     pipeline = Pipeline_SWT(prefix="./train/")
-    #print(pipeline.run_pipeline('00009_hr'))
+    print(pipeline.run_pipeline('00009_hr', test=True))
