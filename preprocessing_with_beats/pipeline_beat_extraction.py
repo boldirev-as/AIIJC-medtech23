@@ -3,7 +3,7 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 import pywt
-from preprocessing_beat import extract_beats
+from preprocessing_with_beats.preprocessing_beat import extract_beats
 
 
 class PipelineBeatExtraction():
@@ -50,4 +50,13 @@ class PipelineBeatExtraction():
         record = self._load_record(record_name)
         denoised_record = self._denoise(record)
         beats = self._extract_beats(denoised_record)
+
+        min_beat_len = len(beats[0])
+        for ecg_channel in beats:
+            min_beat_len = min(len(ecg_channel), min_beat_len)
+        
+        for ecg_channel in range(len(beats)):
+            beats[ecg_channel] = beats[ecg_channel][:min_beat_len]
+        # отбрасываем удары, чтобы все каналы ЭКГ были одинаковой длины. 
         # TODO: решить, каким образом сохранять эти удары, мб переписать annotations.
+        return np.asarray(beats)

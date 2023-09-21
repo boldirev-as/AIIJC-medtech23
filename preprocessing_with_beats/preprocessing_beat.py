@@ -502,7 +502,6 @@ def extract_beats(denoised_record, freq, n_seconds4beat=1, test=False):
     results = []
     left_bound = int(n_seconds4beat*freq*1/4)
     right_bound = int(n_seconds4beat*freq*3/4)
-
     for i in range(12):
         QRS_detector = Pan_Tompkins_QRS(freq)
         qrs_dict = QRS_detector.solve(denoised_record[i])
@@ -512,7 +511,7 @@ def extract_beats(denoised_record, freq, n_seconds4beat=1, test=False):
         result = result[result > 0]
         # remove first r_peak, as it's often mispredicted
         result = result[1:]
-
+        
         # show extracted r_peaks
         if test and i == 0:
             plt.figure(figsize=(16, 8), dpi=100)
@@ -524,11 +523,11 @@ def extract_beats(denoised_record, freq, n_seconds4beat=1, test=False):
         curr_beats = []
         for r_peak in result:
             # check boundaries
-            if not (r_peak+right_bound < len(denoised_record) or r_peak-left_bound > 0):
+
+            if r_peak+right_bound >= len(denoised_record[i]) or r_peak-left_bound < 0:
                 continue
             beat = denoised_record[i][r_peak-left_bound: r_peak+right_bound]
             curr_beats.append(np.asarray(beat))
-
         results.append(np.asarray(curr_beats))
 
     return results
