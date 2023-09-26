@@ -1,0 +1,1 @@
+from preprocessing_CWT_DWT.transforming_wavelets import Pipeline_CWT_CNN, Pipeline_SWT

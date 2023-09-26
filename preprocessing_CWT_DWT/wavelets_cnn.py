@@ -1,6 +1,7 @@
 #######################################################################################################################
 # CODE IS FROM https://lightning.ai/docs/pytorch/stable/notebooks/course_UvA-DL/04-inception-resnet-densenet.html#ResNet
 #######################################################################################################################
+
 from IPython.display import HTML, display
 import os
 from types import SimpleNamespace

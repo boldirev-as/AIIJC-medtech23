@@ -12,6 +12,9 @@ import scipy
 
 
 class BasePreprocessingPipeline():
+    """
+        Удаление шума из сигнала, сегментирование.
+    """
 
     def __init__(self, prefix):
         self.prefix = prefix
@@ -67,8 +70,11 @@ class BasePreprocessingPipeline():
         return record
 
 
-# pipeline for generating features from SWT for catboost
+# pipeline for generating features from SWT to catboost
 class Pipeline_SWT(BasePreprocessingPipeline):
+    """
+        Пайплайн для генерации фич из Stationary Wavelet Transform для катбуста. 
+    """
 
     def __init__(self, prefix):
         super().__init__(prefix)
@@ -109,6 +115,9 @@ class Pipeline_SWT(BasePreprocessingPipeline):
 
 
 class Pipeline_CWT_CNN(BasePreprocessingPipeline):
+    """
+        Пайплайн для генерации вейвлет-скалограммы из каждого лида ЭКГ сигнала 
+    """
 
     def __init__(self, prefix, segment_num):
         self.segment_num = segment_num
@@ -119,11 +128,6 @@ class Pipeline_CWT_CNN(BasePreprocessingPipeline):
         scales = range(1, 376)
 
         record = self.run_preprocessing(record_name, segment_time=1.5)
-
-        # в transforming.ipynb рекорды с миокардом дублируются дважды и к названиям добавляется _1, _2
-        # делается чтобы оверсемплить сэмплы с миокардом, потому что имбаланс.
-        if (record_name[-2] == "_"):
-            self.segment_num = 1 if int(record_name[-1]) == 1 else 2
 
         # код для получения cwt для каждого экг лида отдельно
         for ecg_lead in range(12):
@@ -147,4 +151,4 @@ if __name__ == "__main__":
     pipeline.run_pipeline('00009_hr', test=True)
 
     pipeline = Pipeline_SWT(prefix="./train/")
-    print(pipeline.run_pipeline('00009_hr', test=True))
+    pipeline.run_pipeline('00009_hr', test=True)

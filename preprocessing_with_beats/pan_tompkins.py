@@ -511,7 +511,7 @@ def extract_beats(denoised_record, freq, n_seconds4beat=1, test=False):
         result = result[result > 0]
         # remove first r_peak, as it's often mispredicted
         result = result[1:]
-        
+
         # show extracted r_peaks
         if test and i == 0:
             plt.figure(figsize=(16, 8), dpi=100)
@@ -520,10 +520,10 @@ def extract_beats(denoised_record, freq, n_seconds4beat=1, test=False):
             plt.scatter(
                 result, denoised_record[i][result], color='red', s=50, marker='*')
 
+        # extract beats from extracted r peaks
         curr_beats = []
         for r_peak in result:
             # check boundaries
-
             if r_peak+right_bound >= len(denoised_record[i]) or r_peak-left_bound < 0:
                 continue
             beat = denoised_record[i][r_peak-left_bound: r_peak+right_bound]
