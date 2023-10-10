@@ -1,0 +1,2 @@
+from preprocessing_CWT_DWT.transforming_wavelets import Pipeline_CWT_CNN, Pipeline_SWT
+from preprocessing_CWT_DWT.wavelets_cnn import CWT_ResNet
