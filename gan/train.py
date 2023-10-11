@@ -49,17 +49,22 @@ def main():
         for step, (data, _) in enumerate(trainloader):
             # training netD
             real_cpu = data.to(device)
-            b_size = real_cpu.size(0)
+            b_size = real_cpu.size(-1)
+            shape = real_cpu.shape
             netD.zero_grad()
 
-            noise = torch.randn(b_size, nz, 1, device=device)
+            noise = torch.randn(shape, nz, 1, device=device)
+            
+            print("NOISE SHAPE", noise.shape)
             fake = netG(noise)
+            print("FAKE SHAPE", fake.shape)
 
             # gradient penalty
-            eps = torch.Tensor(b_size, 1, 1).uniform_(0, 1)
+            eps = torch.Tensor(shape, 1, 1, ).uniform_(0, 1)
+            eps = eps.to(device)
             print("SHAPE", data.shape)
             print("SHAPE2", fake.shape)
-            x_p = eps * data + (1 - eps) * fake
+            x_p = eps * real_cpu + (1 - eps) * fake
             grad = autograd.grad(netD(x_p).mean(), x_p, create_graph=True, retain_graph=True)[0].view(b_size, -1)
             grad_norm = torch.norm(grad, 2, 1)
             grad_penalty = p_coeff * torch.pow(grad_norm - 1, 2)
