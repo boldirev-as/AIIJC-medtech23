@@ -5,3 +5,4 @@
 ./train
 ./train_annotations.csv
 ./val_annotations.csv
+**/__pycache__/
