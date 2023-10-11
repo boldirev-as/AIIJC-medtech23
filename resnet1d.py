@@ -1,4 +1,4 @@
-##### GOT IT FROM https://github.com/hsd1503/resnet1d/blob/master/resnet1d.py
+# GOT IT FROM https://github.com/hsd1503/resnet1d/blob/master/resnet1d.py
 
 """
 resnet for 1-d signal data, pytorch version
@@ -17,18 +17,6 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
-
-
-class MyDataset(Dataset):
-    def __init__(self, data, label):
-        self.data = data
-        self.label = label
-
-    def __getitem__(self, index):
-        return (torch.tensor(self.data[index], dtype=torch.float), torch.tensor(self.label[index], dtype=torch.long))
-
-    def __len__(self):
-        return len(self.data)
 
 
 class MyConv1dPadSame(nn.Module):
@@ -266,7 +254,7 @@ class ResNet1D(nn.Module):
         self.final_relu = nn.ReLU(inplace=True)
         # self.do = nn.Dropout(p=0.5)
         self.dense = nn.Linear(out_channels, n_classes)
-        # self.softmax = nn.Softmax(dim=1)
+        self.softmax = nn.Softmax(dim=1)
 
     def forward(self, x):
 
@@ -303,7 +291,8 @@ class ResNet1D(nn.Module):
         out = self.dense(out)
         if self.verbose:
             print('dense', out.shape)
-        # out = self.softmax(out)
+        # print('dense', out.shape)
+        out = self.softmax(out)
         if self.verbose:
             print('softmax', out.shape)
 
