@@ -57,31 +57,33 @@ class Generator(nn.Module):
         super().__init__()
             
         self.main = nn.Sequential(
-            nn.ConvTranspose1d(nz, 2048, 4, 2, 1, bias=False),
-            nn.BatchNorm1d(2048),
+            nn.ConvTranspose1d(nz, 12*2048, 4, 2, 1, bias=False),
+            nn.BatchNorm1d(12*2048),
             nn.ReLU(True),
 
-            nn.ConvTranspose1d(2048, 1024,4, 2, 1, bias=False),
-            nn.BatchNorm1d(1024),
+            nn.ConvTranspose1d(12*2048, 12*1024,4, 2, 1, bias=False),
+            nn.BatchNorm1d(12*1024),
             nn.ReLU(True),
 
-            nn.ConvTranspose1d(1024, 512, 4, 2, 1,bias=False),
+            nn.ConvTranspose1d(12*1024, 12*512, 4, 2, 1,bias=False),
             nn.BatchNorm1d(512),
             nn.ReLU(True),
 
-            nn.ConvTranspose1d(512, 256, 4, 2, 1,bias=False),
+            # nn.Conv1d(500, ),
+            # nn.Tanh()
+            nn.ConvTranspose1d(12*512, 12*256, 4, 2, 1,bias=False),
             nn.BatchNorm1d(256),
             nn.ReLU(True),
 
-            nn.ConvTranspose1d(256, 128, 4, 2, 1, bias=False),
+            nn.ConvTranspose1d(12*256, 12*128, 4, 2, 1, bias=False),
             nn.BatchNorm1d(128),
             nn.ReLU(True),
 
-            nn.ConvTranspose1d(128, 64, 4, 2, 1, bias=False),
+            nn.ConvTranspose1d(12*128, 12*64, 4, 2, 1, bias=False),
             nn.BatchNorm1d(64),
             nn.ReLU(True),
 
-            nn.Conv1d(64, 12, 4, 2, 1, bias=False),
+            nn.Conv1d(12*64, 12*1, 4, 2, 1, bias=False),
             nn.Tanh()
         )
 

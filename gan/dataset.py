@@ -20,7 +20,9 @@ class DatasetECG(Dataset):
 
     def __getitem__(self, idx):
         signals_path = os.path.join(self.signals_dir, self.signals_labels.iloc[idx, 0]+ ".npy")
-        signal = np.load(signals_path).astype(np.float32)        
+        signal = np.load(signals_path)
+        signal = np.append(signal, [np.zeros(12)]*12, axis=1).astype(np.float32)        
+
 
         # iloc[idx, 2:] 2 is because first column is a record name
         labels = torch.from_numpy(self.signals_labels.iloc[idx, 2:].values.astype(int)).float()
