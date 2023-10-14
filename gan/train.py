@@ -3,41 +3,58 @@ import torch.nn as nn
 import torch.optim as optim
 import torchvision.transforms as transforms
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 from gan import Discriminator, Generator, weights_init
 from dataset import DatasetECG
 import torch.autograd as autograd
-
+import json
+import os
 
 beta1 = 0.5
 beta2 = 0.999
 p_coeff = 10
 n_critic = 5
-lr = 1e-4
-epoch_num = 30 
-batch_size = 1
-nz = 100 # length of noise
-ngpu = 0
+lr = 0.00002 
+workers = 2
+batch_size = 8
+nc = 1
+nz = 100
+ngf = 64 
+ndf = 64
+epoch_num = 32
+ngpu = 1
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+matplotlib.use('TkAgg')
 
-
+save_path = f'./gan/nets/version_2048maxConv_ep{epoch_num}_nz{nz}_nf{ngf}_nc{nc}/'
+#os.mkdir(save_path)
+os.chdir('./gan/')
 def main():
     # load training data
-    trainset = DatasetECG("./train_annotations.csv", "transformed_train")
+    trainset = DatasetECG("../train_annotations.csv", "./../transformed_train")
 
     trainloader = torch.utils.data.DataLoader(
         trainset, batch_size=batch_size, shuffle=False
     )
 
+    real_batch = next(iter(trainloader))
+    plt.figure(figsize=(8,8))
+    plt.axis("off")
+    plt.title("Example of second lead of ecg")
+    #plt.plot(real_batch[0][0][2])
+    plt.plot(real_batch[0][0])
+    plt.show(block=False)
+
     # init netD and netG
-    netD = Discriminator().to(device)
+    netD = Discriminator(nc, ndf, ngpu).to(device)
     netD.apply(weights_init)
 
-    netG = Generator(nz).to(device)
+    netG = Generator(nz, nc,ngf,ngpu).to(device)
     netG.apply(weights_init)
 
     # used for visualizing training process
-    fixed_noise = torch.randn(32, nz, 1, device=device)
+    fixed_noise = torch.randn(1, nz, 1, device=device)
 
     # optimizers
     optimizerD = optim.Adam(netD.parameters(), lr=lr, betas=(beta1, beta2))
@@ -45,27 +62,30 @@ def main():
     #optimizerD = optim.RMSprop(netD.parameters(), lr=lr)
     #optimizerG = optim.RMSprop(netG.parameters(), lr=lr)
 
-    for epoch in range(epoch_num):
-        for step, (data, _) in enumerate(trainloader):
-            # training netD
-            real_cpu = data.to(device)
-            b_size = real_cpu.size(-1)
-            shape = real_cpu.shape
-            netD.zero_grad()
+    img_list = []
+    G_losses = []
+    D_losses = []
+    iters = 0
 
-            noise = torch.randn(shape, nz, 1, device=device)
+    for epoch in range(epoch_num):
+        for step, (data, _j) in enumerate(trainloader):
+            # training netD
+            real_cpu = torch.unsqueeze(data, dim=1).to(device)
+            b_size = real_cpu.size(0)
+            netD.zero_grad()
             
-            print("NOISE SHAPE", noise.shape)
+            noise = torch.randn(b_size, nz, 1, device=device)
+
             fake = netG(noise)
-            print("FAKE SHAPE", fake.shape)
 
             # gradient penalty
-            eps = torch.Tensor(shape, 1, 1, ).uniform_(0, 1)
+            eps = torch.Tensor(b_size, 1, 1, ).uniform_(0, 1)
             eps = eps.to(device)
-            print("SHAPE", data.shape)
-            print("SHAPE2", fake.shape)
+            #print("EPS shape", eps.shape)
+            #print("real_cpu shape", real_cpu.shape)
             x_p = eps * real_cpu + (1 - eps) * fake
-            grad = autograd.grad(netD(x_p).mean(), x_p, create_graph=True, retain_graph=True)[0].view(b_size, -1)
+            grad = autograd.grad(netD(x_p).mean(), x_p, create_graph=True, retain_graph=True)[
+                0].view(b_size, -1)
             grad_norm = torch.norm(grad, 2, 1)
             grad_penalty = p_coeff * torch.pow(grad_norm - 1, 2)
 
@@ -88,25 +108,61 @@ def main():
                 netG.zero_grad()
                 loss_G.backward()
                 optimizerG.step()
+            # Output training stats
+            if step % 50 == 0:
+                print('[%d/%d][%d/%d]\tLoss_D: %.4f\tLoss_G: %.4f\t'
+                      % (epoch, epoch_num, step, len(trainloader),
+                         loss_D.item(), loss_G.item()))
 
-            if step % 5 == 0:
-                print('[%d/%d][%d/%d]\tLoss_D: %.4f\tLoss_G: %.4f'
-                      % (epoch, epoch_num, step, len(trainloader), loss_D.item(), loss_G.item()))
+            G_losses.append(loss_G.item())
+            D_losses.append(loss_D.item())
+            # Check how the generator is doing by saving G's output on fixed_noise
+            if (iters % 500 == 0) or ((epoch == epoch_num-1) and (i == len(trainloader)-1)):
+                with torch.no_grad():
+                    fake = netG(fixed_noise).detach().cpu()
+                #img_list.append(vutils.make_grid(fake, padding=2, normalize=True))
+                img_list.append(fake[0])
 
-        # save training process
-        with torch.no_grad():
-            fake = netG(fixed_noise).detach().cpu()
-            f, a = plt.subplots(4, 4, figsize=(8, 8))
-            for i in range(4):
-                for j in range(4):
-                    a[i][j].plot(fake[i * 4 + j].view(-1))
-                    a[i][j].set_xticks(())
-                    a[i][j].set_yticks(())
-            plt.savefig('./img/wgan_gp_epoch_%d.png' % epoch)
-            plt.close()
     # save model
+    plt.figure(figsize=(10, 5))
+    plt.title("Generator and Discriminator Loss During Training")
+    plt.plot(G_losses, label="G")
+    plt.plot(D_losses, label="D")
+    plt.xlabel("iterations")
+    plt.ylabel("Loss")
+    plt.legend()
+    #plt.savefig(save_path+"loss.png", tight=True)
+    plt.show(block=False)
+
+    fig = plt.figure(figsize=(40, 20))
+    plt.axis("off")
+
+    plt.title("examples of generated ecg 2 lead")
+    for i, img in enumerate(img_list[::int(len(img_list)/6)]):
+        sub = fig.add_subplot(4, 2, i + 1, )
+        sub.title.set_text(i)
+        sub.plot(img.squeeze())
+    #plt.savefig(save_path+"examples.png", tight=True)
+    plt.show(block=False)
+
+    params = {
+        "beta1":beta1,
+        "beta2":beta2,
+        "p_coeff":p_coeff,
+        "n_critic":n_critic,
+        "lr":lr,
+        "batch_size":batch_size,
+        "nc":nc,
+        "nz":nz,
+        "ngf":ngf,
+        "ndf":ndf,
+        "epoch_num":epoch_num,
+    }
+
+    json.dump(params, open("./nets/params.json", 'w+'))
     torch.save(netG, './nets/wgan_gp_netG.pkl')
     torch.save(netD, './nets/wgan_gp_netD.pkl')
+    plt.show()
 
 
 if __name__ == '__main__':

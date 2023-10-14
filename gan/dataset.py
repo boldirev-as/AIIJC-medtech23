@@ -4,28 +4,33 @@ import numpy as np
 import os
 from torch.utils.data import Dataset
 
+
 class DatasetECG(Dataset):
     def __init__(self, annotations_file, signals_dir):
         """
         annotantions_file - path to the annotations dataframe. 
                             First column should be name of the record, second - strat_fold then labels 
-        
+
         signals_dir - path to the directory with transformed signals
         """
         self.signals_labels = pd.read_csv(annotations_file)
-        self.signals_dir = signals_dir 
+        self.signals_labels = self.signals_labels[self.signals_labels['myocard'] == 1]
+        self.signals_dir = signals_dir
 
     def __len__(self):
         return len(self.signals_labels)
 
     def __getitem__(self, idx):
-        signals_path = os.path.join(self.signals_dir, self.signals_labels.iloc[idx, 0]+ ".npy")
+        signals_path = os.path.join(
+            self.signals_dir, self.signals_labels.iloc[idx, 0] + ".npy")
         signal = np.load(signals_path)
-        signal = np.append(signal, [np.zeros(12)]*12, axis=1).astype(np.float32)        
-
+        signal = np.append(signal, [np.zeros(12)]*12, axis=1)
+        signal = signal[2, :]
+        signal = signal.astype(np.float32)
 
         # iloc[idx, 2:] 2 is because first column is a record name
-        labels = torch.from_numpy(self.signals_labels.iloc[idx, 2:].values.astype(int)).float()
+        labels = torch.from_numpy(
+            self.signals_labels.iloc[idx, 2:].values.astype(int)).float()
         return signal, labels
 
 # class Dataset():
