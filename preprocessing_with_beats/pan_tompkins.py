@@ -503,6 +503,7 @@ def extract_beats(denoised_record, freq, n_seconds4beat=1, test=False):
     left_bound = int(n_seconds4beat*freq*1/4)
     right_bound = int(n_seconds4beat*freq*3/4)
     heart_rates = []
+    max_diffs = []
     for i in range(12):
         QRS_detector = Pan_Tompkins_QRS(freq)
         qrs_dict = QRS_detector.solve(denoised_record[i])
@@ -530,6 +531,9 @@ def extract_beats(denoised_record, freq, n_seconds4beat=1, test=False):
             beat = denoised_record[i][r_peak-left_bound: r_peak+right_bound]
             curr_beats.append(np.asarray(beat))
         results.append(np.asarray(curr_beats))
+        #max_dif = np.diff(np.diff(result))
+        max_dif = np.diff(np.diff(result))
+        max_diffs.append(max_dif)
         heartRate = (60*freq)/np.average(np.diff(result))
         heart_rates.append(heartRate)
     return results

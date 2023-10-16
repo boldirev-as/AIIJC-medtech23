@@ -24,6 +24,7 @@ class DatasetECG(Dataset):
         signals_path = os.path.join(
             self.signals_dir, self.signals_labels.iloc[idx, 0] + ".npy")
         signal = np.load(signals_path)
+        signal_length = signal.shape[1]
         signal = np.append(signal, [np.zeros(12)]*12, axis=1)
         signal = signal[2, :]
         signal = signal.astype(np.float32)

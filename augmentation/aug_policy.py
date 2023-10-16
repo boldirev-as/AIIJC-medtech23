@@ -8,7 +8,8 @@ import torch
 from torch import nn, Tensor
 from torch.distributions import Categorical, RelaxedOneHotCategorical
 
-from operations import *
+#from operations import *
+from augmentation.operations import *
 
 
 class SubPolicyStage(nn.Module):

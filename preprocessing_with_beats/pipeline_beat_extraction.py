@@ -43,12 +43,18 @@ class PipelineBeatExtraction():
 
         return denoised
 
-    def _extract_beats(self, denoised_record):
-        return extract_beats(denoised_record, self.freq, self.num_secs_for_beat)
+    def _extract_beats(self, denoised_record, test=False):
+        return extract_beats(denoised_record, self.freq, self.num_secs_for_beat, test=test)
+        
+    def print_beat(x, y, ecg_channel):
+        fig, ax = plt.subplots()  # Create a figure containing a single axes.
+        ax.set_title(f"ECG channel {ecg_channel}")
+        ax.plot(x, y)  # Plot some data on the axes.
 
     def run_pipeline(self, record_name):
 
         record = self._load_record(record_name)
+        
         denoised_record = self._denoise(record)
         beats = self._extract_beats(denoised_record)
 
