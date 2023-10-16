@@ -110,7 +110,7 @@ class RandTemporalWarp(_Operation):
                                      learn_probability, temperature)
 
         # create the warp obj here.
-        self.warp_obj = warp_ops.RandWarpAug([5000])
+        self.warp_obj = warp_ops.RandWarpAug([500])
 
     def forward(self,input, label):
 
@@ -190,7 +190,7 @@ class RandDisplacement(_Operation):
                                      learn_probability, temperature)
 
     # create the warp obj here.
-        self.warp_obj = warp_ops.DispAug([5000])
+        self.warp_obj = warp_ops.DispAug([500])
 
     def forward(self,input, label):
 
