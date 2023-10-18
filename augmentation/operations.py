@@ -10,9 +10,11 @@ import torch
 from torch import nn
 from torch.distributions import RelaxedBernoulli, Bernoulli
 
-from functional import (rand_temporal_warp, baseline_wander, gaussian_noise, rand_crop, spec_aug, rand_displacement, magnitude_scale)
+#from functional import (rand_temporal_warp, baseline_wander, gaussian_noise, rand_crop, spec_aug, rand_displacement, magnitude_scale)
+from augmentation.functional import (rand_temporal_warp, baseline_wander, gaussian_noise, rand_crop, spec_aug, rand_displacement, magnitude_scale)
 
-import warp_ops
+#import warp_ops
+from augmentation import warp_ops
 
 
 class _Operation(nn.Module):
@@ -108,7 +110,7 @@ class RandTemporalWarp(_Operation):
                                      learn_probability, temperature)
 
         # create the warp obj here.
-        self.warp_obj = warp_ops.RandWarpAug([5000])
+        self.warp_obj = warp_ops.RandWarpAug([500])
 
     def forward(self,input, label):
 
@@ -188,7 +190,7 @@ class RandDisplacement(_Operation):
                                      learn_probability, temperature)
 
     # create the warp obj here.
-        self.warp_obj = warp_ops.DispAug([5000])
+        self.warp_obj = warp_ops.DispAug([500])
 
     def forward(self,input, label):
 
