@@ -1,15 +1,33 @@
+import json
+
 import numpy as np
 import pandas as pd
 import torch
-from flask import Flask, url_for, request
-import matplotlib
 
-matplotlib.use('TkAgg')
+from flask import Flask, url_for, request
+from flask_restful import Api
+
+import matplotlib
 import matplotlib.pyplot as plt
 
 from inference import Lightning_ResNet1D, inference_model
 
+matplotlib.use('TkAgg')
+
 app = Flask(__name__)
+api = Api(app)
+
+
+@app.route('/api', methods=['POST'])
+def api_request():
+    request.files['file'].save("input.npy")
+
+    preds = inference_model("input.npy", resnet_model)
+
+    print(preds)
+    return json.dumps({x: float(y) for x, y in zip(['перегородочный', 'передний', 'боковой',
+                                                    'передне-боковой', 'передне-перегородочный', 'нижний', 'норма'],
+                                                   preds)})
 
 
 @app.route('/', methods=['POST', 'GET'])
@@ -78,11 +96,13 @@ def form_sample():
         request.files['file'].save("input.npy")
 
         preds = inference_model("input.npy", resnet_model)
+
         ecg_signal = np.load("input.npy")
         pd.DataFrame(ecg_signal.T,
                      columns=['I', 'II', 'III', 'aVR', 'aVL', 'aVF', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6']).plot(
             subplots=True, figsize=(16, 8))
         plt.savefig("static/out.png", bbox_inches='tight')
+
         print(preds)
         return f"""<h3>Прогнозирование от модели: у вас инфаркт миокарда
          с вероятностью {round(100 - preds[6] * 100, 2)}%. <br>  
